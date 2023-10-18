@@ -32,7 +32,6 @@ def dataset_parse(dataset):
                     pre_dataframe.append([p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
 
     
-#     df = pd.DataFrame(pre_dataframe, columns=["paragraph", "question", "answer_start", "answers"])
     df = pd.DataFrame(pre_dataframe, columns=["context", "question", "answers"])
     ds = Dataset.from_pandas(df)
 
@@ -90,7 +89,7 @@ def preprocess_function(examples, tokenizer):
     return inputs
 
 
-def preprocess(data_type, file_path = None):
+def preprocess(data_type, file_path = None, tokenizer=None):
     if data_type:
         data = open_file(data_type=data_type)
     else:
@@ -98,8 +97,6 @@ def preprocess(data_type, file_path = None):
     
     data = dataset_parse(data)
     
-    tokenized = data.map(preprocess_function, batched=True)
+    tokenized = data.map(lambda x: preprocess_function(x, tokenizer), batched=True)
     
     return tokenized
-
-    
