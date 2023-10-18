@@ -12,9 +12,9 @@ def open_file(data_type=None, file_path=None):
     f = None
     
     if data_type == DataType.Train:
-        f = open("train-v1.1.json")
+        f = open("@/squad/train-v1.1.json")
     elif data_type == DataType.TEST:
-        f = open("dev-v1.1.json")
+        f = open("@/squad/dev-v1.1.json")
     elif file_path and not data_type:
         f = open(file_path)
     else:

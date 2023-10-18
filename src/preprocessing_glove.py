@@ -17,9 +17,9 @@ def open_file(data_type=None, file_path=None):
     f = None
     
     if data_type == DataType.Train:
-        f = open("train-v1.1.json")
+        f = open("@/squad/train-v1.1.json")
     elif data_type == DataType.TEST:
-        f = open("dev-v1.1.json")
+        f = open("@/squad/dev-v1.1.json")
     elif file_path and not data_type:
         f = open(file_path)
     else:
@@ -115,7 +115,7 @@ def pad_tensor(data):
     
     return torch.stack(padded_tensors)
 
-def preprocess(data_type, file_path = None, embedding_path="./glove.6B.50d.txt"):
+def preprocess(data_type, file_path = None, embedding_path="@/glove.6B.50d.txt"):
     embeddings = embedding_init(embedding_path)
     
     if data_type:
