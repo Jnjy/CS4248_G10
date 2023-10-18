@@ -2,6 +2,8 @@ import json
 from datasets import Dataset
 import pandas as pd
 from enum import Enum
+import nltk
+nltk.download('punkt')
 from nltk.tokenize import word_tokenize
 import torch
 
