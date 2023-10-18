@@ -38,7 +38,7 @@ def dataset_parse(dataset):
 
     return ds
 
-def preprocess_function(examples):
+def preprocess_function(examples, tokenizer):
     questions = [q.strip() for q in examples["question"]]
     inputs = tokenizer(
         questions,
