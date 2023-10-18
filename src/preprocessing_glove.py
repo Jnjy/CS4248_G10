@@ -1,11 +1,11 @@
 import json
-from datasets import Dataset
+import nltk
+import torch
 import pandas as pd
 from enum import Enum
-import nltk
-nltk.download('punkt')
+from datasets import Dataset
 from nltk.tokenize import word_tokenize
-import torch
+nltk.download('punkt')
 
 VEC_UNK = torch.tensor([0.0] * 50, dtype=torch.float32)
  

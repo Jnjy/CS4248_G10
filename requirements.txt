@@ -1,5 +1,5 @@
-json
 datasets
 pandas
 nltk
 torch
+numpy
