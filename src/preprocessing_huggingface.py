@@ -3,7 +3,9 @@ import json
 from datasets import Dataset
 import pandas as pd
 from enum import Enum
- 
+import os
+CWD = os.getcwd()
+
 class DataType(Enum):
     TRAIN = 1
     TEST = 2
@@ -11,10 +13,10 @@ class DataType(Enum):
 def open_file(data_type=None, file_path=None):
     f = None
     
-    if data_type == DataType.Train:
-        f = open("@/squad/train-v1.1.json")
+    if data_type == DataType.TRAIN:
+        f = open(CWD + "/squad/train-v1.1.json")
     elif data_type == DataType.TEST:
-        f = open("@/squad/dev-v1.1.json")
+        f = open(CWD + "/squad/dev-v1.1.json")
     elif file_path and not data_type:
         f = open(file_path)
     else:

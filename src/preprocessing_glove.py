@@ -6,9 +6,11 @@ import nltk
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize
 import torch
+import os
 
 VEC_UNK = torch.tensor([0.0] * 50, dtype=torch.float32)
- 
+CWD = os.getcwd()
+
 class DataType(Enum):
     TRAIN = 1
     TEST = 2
@@ -16,10 +18,10 @@ class DataType(Enum):
 def open_file(data_type=None, file_path=None):
     f = None
     
-    if data_type == DataType.Train:
-        f = open("@/squad/train-v1.1.json")
+    if data_type == DataType.TRAIN:
+        f = open(CWD + "/squad/train-v1.1.json")
     elif data_type == DataType.TEST:
-        f = open("@/squad/dev-v1.1.json")
+        f = open(CWD + "/squad/dev-v1.1.json")
     elif file_path and not data_type:
         f = open(file_path)
     else:
@@ -35,13 +37,13 @@ def dataset_parse(dataset):
             for pqas in p["qas"]:
                 for ans in pqas["answers"]:
 #                     pre_dataframe.append(map(str, [p["context"], pqas["question"].strip(), ans["answer_start"], ans["text"]]))
-                    pre_dataframe.append([p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
+                    pre_dataframe.append([p["context"], pqas["question"].strip(), ans["text"]])
 
     
     df = pd.DataFrame(pre_dataframe, columns=["context", "question", "answers"])
 
     return df
-
+ 
 def tokenize(text):
     return word_tokenize(text)
 
@@ -53,7 +55,7 @@ def encode_answer(paragraph_tokens, answer_tokens):
     ans_end = None
     
     for idx, paragraph_token in enumerate(paragraph_tokens):
-        if paragraph_token == answer_tokens[answer_ptr]:
+        if paragraph_token == tokenize(answer_tokens):
             answer_ptr += 1
 
             if ans_start == None:
@@ -115,19 +117,33 @@ def pad_tensor(data):
     
     return torch.stack(padded_tensors)
 
-def preprocess(data_type, file_path = None, embedding_path="@/glove.6B.50d.txt"):
+def preprocess(data_type, file_path = None, embedding_path=CWD + "/glove.6B.50d.txt"):
     embeddings = embedding_init(embedding_path)
     
     if data_type:
-        data = open_file(data_type=data_type)
+        data = open_file(data_type=data_type)[0]
     else:
-        data = open_file(file_path=file_path)
+        data = open_file(file_path=file_path)[0]
     
     data = dataset_parse(data)
-    data = data.applymap(tokenize)
-    data['answers'] = data.apply(lambda row: encode_answer(row['paragraph'], row['answers']), axis=1)
-    data['question'] = pad_tensor(data["question"].map(lambda tokens : embed(tokens, embeddings)))
-    data['context'] = pad_tensor(data["context"].map(lambda tokens : embed(tokens, embeddings)))
+    print("data['question'] = data['question'].map(tokenize)")
+    data['question'] = data['question'].map(tokenize)
+    print("data['context'] = data['context'].map(tokenize)")
+    data['context'] = data['context'].map(tokenize)
+    print("data['answers'] = data.apply(lambda row: encode_answer(row['context'], row['answers']), axis=1)")
+    data['answers'] = data.apply(lambda row: encode_answer(row['context'], row['answers']), axis=1)
+    # print("data['question'] = pad_tensor(data['question'].map(lambda tokens : embed(tokens, embeddings)))")
+    # data['question'] = pad_tensor(data["question"].map(lambda tokens : embed(tokens, embeddings)))
+    # print("data['context'] = pad_tensor(data['context'].map(lambda tokens : embed(tokens, embeddings)))")
+    # data['context'] = pad_tensor(data["context"].map(lambda tokens : embed(tokens, embeddings)))
+    print("data['question'] = data['question'].map(lambda tokens : embed(tokens, embeddings))")
+    data['question'] = data["question"].map(lambda tokens : embed(tokens, embeddings))
+    print("data['context'] = data['context'].map(lambda tokens : embed(tokens, embeddings))")
+    data['context'] = data["context"].map(lambda tokens : embed(tokens, embeddings))
+    print("data['question'] = pad_tensor(data['question'])")
+    data['question'] = pad_tensor(data["question"])
+    print("data['context'] = pad_tensor(data['context'])")
+    data['context'] = pad_tensor(data["context"])
     
     return data
 
