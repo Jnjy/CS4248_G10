@@ -1,4 +1,8 @@
-from transformers import DistilBertModel
+from argparse import ArgumentParser
 
-class DistilBERTModel(DistilBertModel):
-    def __init__(self):
+def main():
+    parser = ArgumentParser(description="Parser")
+    parser.add_argument("path_to_json", help="Path to the json", type=str)
+    args = parser.parse_args()
+
+    
