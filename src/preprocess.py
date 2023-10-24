@@ -1,10 +1,10 @@
 class SQUAD():
-    def __init__(self, tokeniser):
-        self.tokeniser = tokeniser
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
 
-    def proprocess(self, examples):
+    def preprocess(self, examples):
         questions = [q.strip() for q in examples["question"]]
-        inputs = self.tokeniser(
+        inputs = self.tokenizer(
             questions,
             examples["context"],
             max_length=384,
@@ -52,3 +52,23 @@ class SQUAD():
         inputs["start_positions"] = start_positions
         inputs["end_positions"] = end_positions
         return inputs
+
+    def dataset_parse(dataset):
+        pre_dataframe = []
+        for data in dataset:
+            for p in data["paragraphs"]:
+                for pqas in p["qas"]:
+                    for ans in pqas["answers"]:
+                        # pre_dataframe.append(map(str, [p["context"], pqas["question"].strip(), ans["answer_start"], ans["text"]]))
+                        pre_dataframe.append([p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
+
+        df = pd.DataFrame(pre_dataframe, columns=["context", "question", "answers"])
+        ds = Dataset.from_pandas(df)
+
+        return ds
+
+    def get_train_set(dataset):
+        ds = dataset_parse(dataset)
+        tokenized_ds = preprocess(ds)
+
+        return tokenized_ds
