@@ -66,7 +66,7 @@ def bert_train(trainFilePath, testFilePath):
         "best_model_dir": f"outputs/{model_type}/best_model",
         "evaluate_during_training": True,
         "max_seq_length": 128,
-        "num_train_epochs": 5,
+        "num_train_epochs": 3,
         "evaluate_during_training_steps": 1000,
         # "wandb_project": "Question Answer Application",
         # "wandb_kwargs": {"name": model_name},
@@ -78,7 +78,7 @@ def bert_train(trainFilePath, testFilePath):
         # "n_gpu": 2,
         # "manual_seed": 4,
         # "use_multiprocessing": False,
-        "train_batch_size": 128,
+        "train_batch_size": 512,
         "eval_batch_size": 64,
         # "config": {
         #     "output_hidden_states": True
