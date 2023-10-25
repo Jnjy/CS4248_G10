@@ -1,25 +1,48 @@
 import os
-import json
 
-from argparse import ArgumentParser
-from transformers import TrainingArguments, AutoTokenizer
+from distilbert import *
+from transformers import AutoTokenizer, DefaultDataCollator, Trainer, TrainingArguments
 from preprocess import SQUAD
+from datasets import load_dataset
 
 CWD = os.getcwd()
 
-def main():
-    # parser = ArgumentParser(description="Parser")
-    # parser.add_argument("path_to_json", help="Path to the json", type=str)
-    # args = parser.parse_args()
-
-    f = open(CWD + "/dataset/train-v1.1.json")
-    dataset = json.load(f, strict=False)["data"]
-
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+def train():
+    model_checkpoint = "distilbert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    
     squad = SQUAD(tokenizer)
+    tokenized_dataset = squad.get_train_set()
+    
+    model = AutoModelForQuestionAnswering.from_pretrained(model_checkpoint)
+    data_collator = DefaultDataCollator()
 
-    tokenized_dataset = squad.get_train_set(dataset)
+    # if torch.cuda.is_available():
+    #     model.cuda()
+
+    batch_size = 16
+    training_args = TrainingArguments(
+        output_dir="model",
+        evaluation_strategy="epoch",
+        learning_rate=2e-5,
+        per_device_train_batch_size=batch_size,
+        per_device_eval_batch_size=batch_size,
+        num_train_epochs=3,
+        weight_decay=0.01
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=tokenized_dataset["train"],
+        eval_dataset=tokenized_dataset["test"],
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+    )
+
+    trainer.train()
+    trainer.save_model("./model/distilbert-trained")
 
 if __name__ == '__main__':
-    main()
+    train()
 
