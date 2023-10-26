@@ -14,9 +14,9 @@ def open_file(data_type=None, file_path=None):
     f = None
     
     if data_type == DataType.TRAIN:
-        f = open(CWD + "/squad/train-v1.1.json")
+        f = open("..\\squad\\train-v1.1.json")
     elif data_type == DataType.TEST:
-        f = open(CWD + "/squad/dev-v1.1.json")
+        f = open("..\\squad\\dev-v1.1.json")
     elif file_path and not data_type:
         f = open(file_path)
     else:
@@ -32,10 +32,10 @@ def dataset_parse(dataset):
             for pqas in p["qas"]:
                 for ans in pqas["answers"]:
 #                     pre_dataframe.append(map(str, [p["context"], pqas["question"].strip(), ans["answer_start"], ans["text"]]))
-                    pre_dataframe.append([p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
+                    pre_dataframe.append([p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }, pqas["id"]])
 
     
-    df = pd.DataFrame(pre_dataframe, columns=["context", "question", "answers"])
+    df = pd.DataFrame(pre_dataframe, columns=["context", "question", "answers", "id"])
     ds = Dataset.from_pandas(df)
 
     return ds
@@ -100,6 +100,6 @@ def preprocess(data_type, file_path = None, tokenizer=None):
     
     data = dataset_parse(data)
     
-    tokenized = data.map(lambda x: preprocess_function(x, tokenizer), batched=True)
+    #tokenized = data.map(lambda x: preprocess_function(x, tokenizer), batched=True)
     
-    return tokenized
+    return data
