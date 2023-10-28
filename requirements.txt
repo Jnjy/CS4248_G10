@@ -3,3 +3,5 @@ pandas
 nltk
 torch
 numpy
+transformers
+simpletransformers
