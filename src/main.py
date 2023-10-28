@@ -1,8 +1,11 @@
 # from preprocessing_glove import *
 from preprocessing_huggingface import *
 from transformers import AutoTokenizer
+from bert_simpletransformer import *
 
 def main():
+    # run bert using simpletransformer library
+    # BERT_train("\\dataset\\dev-v1.1.json" ,"\\dataset\\train-v1.1.json")
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     
     ### Uncomment to use
