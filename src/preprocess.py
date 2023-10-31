@@ -156,15 +156,6 @@ class SQUAD():
         return tokenized
     
     def get_test_set(self):
-        data = load_dataset("squad")
-
-        va = data.map(
-            self.prepare_validation_features,
-            batched=True,
-            remove_columns=data["validation"].column_names
-        )
-        print("from hugging face\n", va)
-
         ds = self.data
         validation_features = ds.map(
             self.prepare_validation_features,
@@ -172,7 +163,6 @@ class SQUAD():
             remove_columns=ds["validation"].column_names
         )
 
-        print("mine:\n", validation_features)
         return validation_features
     
     def get_data(self):
