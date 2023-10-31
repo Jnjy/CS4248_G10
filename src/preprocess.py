@@ -19,9 +19,13 @@ class SQUAD():
         self.tokenizer = tokenizer
 
         self.train_squad = open_file("/dataset/train-v1.1.json")
-        self.train_data = dataset_parse(self.train_squad).train_test_split(test_size=0.2)
+        # self.train_data = dataset_parse(self.train_squad).train_test_split(test_size=0.2)
+        self.train_data = dataset_parse(self.train_squad)
 
         self.dev_squad = open_file("/dataset/dev-v1.1.json")
+        self.dev_data = dataset_parse(self.dev_squad)
+
+        self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
 
     def prepare_train_features(self, examples):
         # Some of the questions have lots of whitespace on the left, which is not useful and will make the
@@ -146,21 +150,29 @@ class SQUAD():
         return tokenized_examples
 
     def get_train_set(self):
-        ds = self.train_data
-        print(ds)
-        tokenized = ds.map(self.prepare_train_features, batched=True, remove_columns=self.train_data["train"].column_names)
+        ds = self.data
+        tokenized = ds.map(self.prepare_train_features, batched=True, remove_columns=ds["train"].column_names)
 
         return tokenized
     
     def get_test_set(self):
-        data = self.train_data
+        data = load_dataset("squad")
 
-        validation_features = data.map(
+        va = data.map(
             self.prepare_validation_features,
             batched=True,
-            remove_columns=data["test"].column_names
+            remove_columns=data["validation"].column_names
+        )
+        print("from hugging face\n", va)
+
+        ds = self.data
+        validation_features = ds.map(
+            self.prepare_validation_features,
+            batched=True,
+            remove_columns=ds["validation"].column_names
         )
 
+        print("mine:\n", validation_features)
         return validation_features
     
     def get_data(self):
