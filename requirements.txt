@@ -4,3 +4,5 @@ nltk
 torch
 numpy
 matploblib
+transformers
+accelerate

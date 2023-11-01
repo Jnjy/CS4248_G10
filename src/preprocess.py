@@ -3,6 +3,7 @@ import json
 import pandas as pd
 
 from enum import Enum
+from evaluate import load
 from datasets import Dataset, load_dataset, DatasetDict
 
 CWD = os.getcwd()
@@ -24,8 +25,8 @@ class SQUAD():
 
         self.dev_squad = open_file("/dataset/dev-v1.1.json")
         self.dev_data = dataset_parse(self.dev_squad)
-
-        self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
+        self.data = load_dataset('squad')
+        # self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
 
     def prepare_train_features(self, examples):
         # Some of the questions have lots of whitespace on the left, which is not useful and will make the
@@ -188,3 +189,35 @@ def dataset_parse(dataset):
     ds = Dataset.from_pandas(df)
 
     return ds
+
+def evaluate():
+    dataset = load_dataset("squad")
+    squad_metric = load("squad")
+
+    references = dataset["validation"]
+    references = process_ref(references)
+
+    predictions = open(f'{CWD}/result/predictions.json')
+    predictions = (json.load(predictions))
+    predictions = process_pred(predictions)
+
+    results = squad_metric.compute(predictions=predictions, references=references)
+    print(results)
+
+def process_ref(references):
+    new_references = list()
+
+    for reference in references:
+        new_reference = {'answers': reference['answers'], 'id': reference['id']}
+        new_references.append(new_reference)
+
+    return new_references
+
+def process_pred(predictions):
+    new_predictions = list()
+
+    for pred in predictions.items():
+        new_predictions.append({'prediction_text': pred[1], 'id': pred[0]})
+
+    return new_predictions
+

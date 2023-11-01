@@ -3,7 +3,6 @@ import os
 from distilbert import *
 from transformers import AutoTokenizer, DefaultDataCollator, Trainer, TrainingArguments
 from preprocess import SQUAD
-from datasets import load_dataset
 
 CWD = os.getcwd()
 
@@ -41,7 +40,7 @@ def train():
     )
 
     trainer.train()
-    trainer.save_model("./model/distilbert-trained")
+    trainer.save_model("./model/distilbert-trained-2")
 
 if __name__ == '__main__':
     train()
