@@ -35,16 +35,16 @@ def process_dataset(dataset):
     return pre_dataframe
 
 
-def BERT_train(trainFilePath, testFilePath):
+def BERT_train(train_file_path, test_file_path):
     print("Enter Bert train function")
     # training set and test set
     # For windows:
     parent_directory = os.path.dirname(CWD)
     print(parent_directory)
-    train_file = open(parent_directory + trainFilePath)
+    train_file = open(parent_directory + train_file_path)
     dataset = json.load(train_file, strict=False)["data"]
     train = process_dataset(dataset)
-    test_file = open(parent_directory + testFilePath)
+    test_file = open(parent_directory + test_file_path)
     dataset = json.load(test_file, strict=False)["data"]
     test = process_dataset(dataset)
 
@@ -122,3 +122,7 @@ def BERT_train(trainFilePath, testFilePath):
 
     print("Finish testing. test result")
     print(answers, probabilities)
+
+
+if __name__ == '__main__':
+    BERT_train("\\dataset\\dev-v1.1.json", "\\dataset\\train-v1.1.json")
