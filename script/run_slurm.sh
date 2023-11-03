@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --time=03:00:00
+#SBATCH --time=24:00:00
 #SBATCH --job-name=cs4248-g10
-#SBATCH --gpus=a100mig:1
-#SBATCH --partition=medium
+#SBATCH --gpus=titanv:1
+#SBATCH --partition=long
 #SBATCH --output=logs/cs4248_%j.slurmlog
 #SBATCH --error=logs/cs4248_%j.slurmlog
 
@@ -19,7 +19,11 @@ conda activate cs4248
 conda info --env
 
 echo "===training==="
-python3 /home/n/njinyuan/CS4248/CS4248_G10/src/train.py
+python3 /home/n/njinyuan/CS4248/CS4248_G10/src/test.py
+
+python3 /home/n/njinyuan/CS4248/CS4248_G10/src/evaluate-g10.py
+# python3 /home/n/njinyuan/CS4248/CS4248_G10/src/evaluate-v2.0.py
+# /home/n/njinyuan/CS4248/CS4248_G10/result/predictions.json 
 
 echo "finished training, deactivating env"
-deactivate
+conda deactivate
