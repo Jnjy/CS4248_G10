@@ -4,6 +4,7 @@ import pandas as pd
 
 from enum import Enum
 from transformers import AutoTokenizer
+from evaluate import load
 from datasets import Dataset, load_dataset, DatasetDict
 
 CWD = os.getcwd()
@@ -25,8 +26,8 @@ class SQUAD():
 
         self.dev_squad = open_file("/dataset/dev-v1.1.json")
         self.dev_data = dataset_parse(self.dev_squad)
-
-        self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
+        self.data = load_dataset('squad')
+        # self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
 
     def prepare_train_features(self, examples):
         # Some of the questions have lots of whitespace on the left, which is not useful and will make the
@@ -202,8 +203,6 @@ def dataset_parse(dataset):
                 answers.append(ans)
 
     parsed_data = dict({'id': ids, 'title': titles, 'context': contexts, 'question': questions, 'answers': answers})
-
-    return Dataset.from_dict(parsed_data)
 
 if __name__ == '__main__':
     model_checkpoint = "distilbert-base-uncased"

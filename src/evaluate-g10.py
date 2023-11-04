@@ -9,7 +9,7 @@ CWD = os.getcwd()
 def evaluate():
     # need to change
     dataset = load_dataset("squad")
-    
+
     squad_metric = load("squad")
 
     references = dataset["validation"]
@@ -18,7 +18,6 @@ def evaluate():
     predictions = open(f'{CWD}/result/predictions.json')
     predictions = (json.load(predictions))
     predictions = process_pred(predictions)
-    
     results = squad_metric.compute(predictions=predictions, references=references)
 
     print(results)

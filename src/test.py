@@ -13,7 +13,7 @@ from evaluate import evaluator
 CWD = os.getcwd()
 
 def test():
-
+    
     my_model_checkpoint = "jeffnjy/distilbert-test-2"
     model_checkpoint = "distilbert-base-uncased"
 
@@ -54,17 +54,14 @@ def test():
     print("===predictions===\n", predictions)
     # predictions.predictions is of type tuple
 
-
     start_logit_1, end_logit_1 = predictions.predictions
-    print("len start logit:", len(start_logit_1))
-    print("len start logit:", len(start_logit_1[0]))
-    
+
     with open(CWD + "/result/start_logit.txt", 'w') as file:
         file.write("===start logit===\n")
         #for logit in start_logit_1:
         for i in range (0, 2, 1):
             res = "["
-
+            
             for number in start_logit_1[i]:
                 res += f'{number}, '
 
@@ -96,7 +93,6 @@ def test():
     with open(CWD + "/result/predictions.json", 'w') as file:
         file.write(json.dumps(final_predictions))
         file.close()
-    
 
     # # metric = load_metric("squad")
     # qa_evaluator = evaluator("question-answering")
@@ -126,7 +122,7 @@ def postprocess_qa_predictions(examples, features, raw_predictions, n_best_size 
 
         min_null_score = None # Only used if squad_v2 is True.
         valid_answers = []
-
+        
         context = example["context"]
         # Looping through all the features associated to the current example.
         for feature_index in feature_indices:
@@ -170,31 +166,21 @@ def postprocess_qa_predictions(examples, features, raw_predictions, n_best_size 
                             "text": context[start_char: end_char]
                         }
                     )
-
+        
         if len(valid_answers) > 0:
             best_answer = sorted(valid_answers, key=lambda x: x["score"], reverse=True)[0]
         else:
             # In the very rare edge case we have not a single non-null prediction, we create a fake prediction to avoid
             # failure.
             best_answer = {"text": "", "score": 0.0}
-
+        
         # Let's pick our final answer: the best one or the null answer (only for squad_v2)
         answer = best_answer["text"] if best_answer["score"] > min_null_score else ""
         predictions[example["id"]] = answer
 
     return predictions
 
-def printstuff():
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    ds = SQUAD(tokenizer)
-    print(ds.get_data()['validation'][0:2])
-
-    ds2 = load_dataset("squad")
-    print(ds2['validation'][0])
-
-
 if __name__ == '__main__':
     # squad = load_dataset("squad")
     # print(squad["validation"]["context"][0])
     test()
-    # printstuff()
