@@ -56,7 +56,7 @@ for data in test_ds:
     test_output_id.append(data["id"])
 
 # Write prediction into JSON file
-for train dataset
+# for train dataset
 dictionary = {
     "id": train_output_id,
     "text": train_output[1]
@@ -81,10 +81,6 @@ json_object = json.dumps(dictionary)
 # Writing to train_output.json
 with open("test_output.json", "w") as outfile:
     outfile.write(json_object)
-
-# evaluate model
-sys.argv = ['train-v1.1.json', 'train_output.json']
-exec(open("evaluate-v2.0.py").read())
 
 sys.argv = ['dev-v1.1.json', 'test_output.json']
 exec(open("evaluate-v2.0.py").read())
