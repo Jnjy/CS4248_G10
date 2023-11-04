@@ -1,6 +1,7 @@
 import os
 import json
 
+from preprocess import SQUAD
 from evaluate import load
 from datasets import load_dataset
 
@@ -8,8 +9,9 @@ CWD = os.getcwd()
 
 def evaluate():
     # need to change
-    dataset = load_dataset("squad")
-
+    # dataset = load_dataset("squad")
+    tokenizer = None
+    dataset = SQUAD(tokenizer).data
     squad_metric = load("squad")
 
     references = dataset["validation"]
