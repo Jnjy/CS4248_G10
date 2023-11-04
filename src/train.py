@@ -1,5 +1,5 @@
 import os
-
+import torch
 from distilbert import *
 from transformers import AutoTokenizer, DefaultDataCollator, Trainer, TrainingArguments
 from preprocess import SQUAD
@@ -7,7 +7,7 @@ from preprocess import SQUAD
 CWD = os.getcwd()
 
 def train():
-    model_checkpoint = "distilbert-base-uncased"
+    model_checkpoint = "albert-base-v2"
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     
     squad = SQUAD(tokenizer)
@@ -16,8 +16,8 @@ def train():
     model = AutoModelForQuestionAnswering.from_pretrained(model_checkpoint)
     data_collator = DefaultDataCollator()
 
-    # if torch.cuda.is_available():
-    #     model.cuda()
+    if torch.cuda.is_available():
+        model.cuda()
 
     batch_size = 16
     training_args = TrainingArguments(
@@ -26,7 +26,7 @@ def train():
         learning_rate=2e-5,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        num_train_epochs=3,
+        num_train_epochs=10,
         weight_decay=0.01
     )
 
@@ -34,13 +34,13 @@ def train():
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["test"],
+        eval_dataset=tokenized_dataset["validation"],
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
 
     trainer.train()
-    trainer.save_model("./model/distilbert-trained-2")
+    trainer.save_model("./model/albert-trained-2")
 
 if __name__ == '__main__':
     train()

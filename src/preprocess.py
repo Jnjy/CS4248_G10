@@ -3,7 +3,7 @@ import json
 import pandas as pd
 
 from enum import Enum
-from evaluate import load
+from transformers import AutoTokenizer
 from datasets import Dataset, load_dataset, DatasetDict
 
 CWD = os.getcwd()
@@ -25,8 +25,8 @@ class SQUAD():
 
         self.dev_squad = open_file("/dataset/dev-v1.1.json")
         self.dev_data = dataset_parse(self.dev_squad)
-        self.data = load_dataset('squad')
-        # self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
+
+        self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
 
     def prepare_train_features(self, examples):
         # Some of the questions have lots of whitespace on the left, which is not useful and will make the
@@ -178,46 +178,35 @@ def open_file(file_path):
         print("Invalid file path.")
 
 def dataset_parse(dataset):
-    pre_dataframe = []
+    ids = []
+    titles = []
+    contexts = []
+    questions = []
+    answers = []
+
     for data in dataset:
         for p in data["paragraphs"]:
             for pqas in p["qas"]:
+                titles.append(data["title"])
+                contexts.append(p["context"])
+                ids.append(pqas["id"])
+                questions.append(pqas["question"])
+
+                text = []
+                answer_start = []
                 for ans in pqas["answers"]:
-                    pre_dataframe.append([pqas["id"], data["title"], p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
+                    text.append(ans["text"])
+                    answer_start.append(ans["answer_start"])
+                
+                ans = dict({'text': text, 'answer_start': answer_start})
+                answers.append(ans)
 
-    df = pd.DataFrame(pre_dataframe, columns=["id", "title", "context", "question", "answers"])
-    ds = Dataset.from_pandas(df)
+    parsed_data = dict({'id': ids, 'title': titles, 'context': contexts, 'question': questions, 'answers': answers})
 
-    return ds
+    return Dataset.from_dict(parsed_data)
 
-def evaluate():
-    dataset = load_dataset("squad")
-    squad_metric = load("squad")
-
-    references = dataset["validation"]
-    references = process_ref(references)
-
-    predictions = open(f'{CWD}/result/predictions.json')
-    predictions = (json.load(predictions))
-    predictions = process_pred(predictions)
-
-    results = squad_metric.compute(predictions=predictions, references=references)
-    print(results)
-
-def process_ref(references):
-    new_references = list()
-
-    for reference in references:
-        new_reference = {'answers': reference['answers'], 'id': reference['id']}
-        new_references.append(new_reference)
-
-    return new_references
-
-def process_pred(predictions):
-    new_predictions = list()
-
-    for pred in predictions.items():
-        new_predictions.append({'prediction_text': pred[1], 'id': pred[0]})
-
-    return new_predictions
-
+if __name__ == '__main__':
+    model_checkpoint = "distilbert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    squad = SQUAD(tokenizer)
+    print(squad.get_train_set())

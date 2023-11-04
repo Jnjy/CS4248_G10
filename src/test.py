@@ -14,8 +14,8 @@ CWD = os.getcwd()
 
 def test():
     
-    my_model_checkpoint = "jeffnjy/distilbert-test-2"
-    model_checkpoint = "distilbert-base-uncased"
+    my_model_checkpoint = "jeffnjy/distilbert-base-test"
+    model_checkpoint = "albert-base-v2d"
 
     tokenizer = AutoTokenizer.from_pretrained(my_model_checkpoint)
     model = AutoModelForQuestionAnswering.from_pretrained(my_model_checkpoint)
