@@ -13,7 +13,7 @@ def train():
     
     squad = SQUAD(tokenizer)
     tokenized_dataset = squad.get_train_set()
-    
+ 
     model = AutoModelForQuestionAnswering.from_pretrained(model_checkpoint)
     data_collator = DefaultDataCollator()
 
@@ -35,7 +35,7 @@ def train():
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["test"],
+        eval_dataset=tokenized_dataset["validation"],
         tokenizer=tokenizer,
         data_collator=data_collator,
     )

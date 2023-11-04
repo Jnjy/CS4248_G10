@@ -3,6 +3,7 @@ import json
 import pandas as pd
 
 from enum import Enum
+from transformers import AutoTokenizer
 from datasets import Dataset, load_dataset, DatasetDict
 
 CWD = os.getcwd()
@@ -177,14 +178,35 @@ def open_file(file_path):
         print("Invalid file path.")
 
 def dataset_parse(dataset):
-    pre_dataframe = []
+    ids = []
+    titles = []
+    contexts = []
+    questions = []
+    answers = []
+
     for data in dataset:
         for p in data["paragraphs"]:
             for pqas in p["qas"]:
+                titles.append(data["title"])
+                contexts.append(p["context"])
+                ids.append(pqas["id"])
+                questions.append(pqas["question"])
+
+                text = []
+                answer_start = []
                 for ans in pqas["answers"]:
-                    pre_dataframe.append([pqas["id"], data["title"], p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
+                    text.append(ans["text"])
+                    answer_start.append(ans["answer_start"])
+                
+                ans = dict({'text': text, 'answer_start': answer_start})
+                answers.append(ans)
 
-    df = pd.DataFrame(pre_dataframe, columns=["id", "title", "context", "question", "answers"])
-    ds = Dataset.from_pandas(df)
+    parsed_data = dict({'id': ids, 'title': titles, 'context': contexts, 'question': questions, 'answers': answers})
 
-    return ds
+    return Dataset.from_dict(parsed_data)
+
+if __name__ == '__main__':
+    model_checkpoint = "distilbert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    squad = SQUAD(tokenizer)
+    print(squad.get_train_set())
