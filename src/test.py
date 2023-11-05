@@ -40,7 +40,6 @@ def test():
         data_collator=data_collator,
     )
 
-
     # get the validation data set
     test_set = squad.data
     print("data", test_set)

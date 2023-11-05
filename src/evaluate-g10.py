@@ -1,13 +1,17 @@
 import os
 import json
 
+from preprocess import SQUAD
 from evaluate import load
 from datasets import load_dataset
 
 CWD = os.getcwd()
 
 def evaluate():
-    dataset = load_dataset("squad")
+    # need to change
+    # dataset = load_dataset("squad")
+    tokenizer = None
+    dataset = SQUAD(tokenizer).data
     squad_metric = load("squad")
 
     references = dataset["validation"]
@@ -16,7 +20,6 @@ def evaluate():
     predictions = open(f'{CWD}/result/predictions.json')
     predictions = (json.load(predictions))
     predictions = process_pred(predictions)
-
     results = squad_metric.compute(predictions=predictions, references=references)
 
     print(results)
