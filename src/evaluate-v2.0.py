@@ -14,6 +14,8 @@ import re
 import string
 import sys
 
+from datasets import load_dataset 
+
 OPTS = None
 
 def parse_args():
@@ -29,7 +31,7 @@ def parse_args():
   parser.add_argument('--out-image-dir', '-p', metavar='out_images', default=None,
                       help='Save precision-recall curves to directory.')
   parser.add_argument('--verbose', '-v', action='store_true')
-  if len(sys.argv) == 1:
+  if len(sys.argv) == 0:
     parser.print_help()
     sys.exit(1)
   return parser.parse_args()
@@ -229,9 +231,10 @@ def find_all_best_thresh(main_eval, preds, exact_raw, f1_raw, na_probs, qid_to_h
   main_eval['best_f1_thresh'] = f1_thresh
 
 def main():
-  with open(OPTS.data_file) as f:
-    dataset_json = json.load(f)
-    dataset = dataset_json['data']
+  # with open(OPTS.data_file) as f:
+  #   dataset_json = json.load(f)
+  #   dataset = dataset_json['data']
+  dataset = load_dataset("squad")["validation"]
   with open(OPTS.pred_file) as f:
     preds = json.load(f)
   if OPTS.na_prob_file:

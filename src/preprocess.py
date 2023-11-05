@@ -4,6 +4,7 @@ import pandas as pd
 
 from enum import Enum
 from transformers import AutoTokenizer
+from evaluate import load
 from datasets import Dataset, load_dataset, DatasetDict
 
 CWD = os.getcwd()

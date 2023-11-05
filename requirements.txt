@@ -5,4 +5,3 @@ torch
 numpy
 matploblib
 transformers
-accelerate
