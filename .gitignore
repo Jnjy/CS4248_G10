@@ -1,2 +1,4 @@
 glove.6B.50d.txt
 .ipynb_checkpoints
+tmp/*
+*/__pycache__/*
