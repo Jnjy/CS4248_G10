@@ -3,7 +3,6 @@ import os
 from distilbert import *
 from transformers import AutoTokenizer, DefaultDataCollator, Trainer, TrainingArguments
 from preprocess import SQUAD
-from datasets import load_dataset
 
 CWD = os.getcwd()
 
@@ -13,7 +12,7 @@ def train():
     
     squad = SQUAD(tokenizer)
     tokenized_dataset = squad.get_train_set()
-    
+ 
     model = AutoModelForQuestionAnswering.from_pretrained(model_checkpoint)
     data_collator = DefaultDataCollator()
 
@@ -35,13 +34,13 @@ def train():
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["test"],
+        eval_dataset=tokenized_dataset["validation"],
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
 
     trainer.train()
-    trainer.save_model("./model/distilbert-trained")
+    trainer.save_model("./model/distilbert-trained-2")
 
 if __name__ == '__main__':
     train()

@@ -1,15 +1,35 @@
+import os
+import json
 import pandas as pd
-from datasets import Dataset, load_dataset
 
+from enum import Enum
+from transformers import AutoTokenizer
+from evaluate import load
+from datasets import Dataset, load_dataset, DatasetDict
+
+CWD = os.getcwd()
+
+'''
+Code largely follows huggingface @ https://colab.research.google.com/github/huggingface/notebooks/blob/main/examples/question_answering.ipynb#scrollTo=Xmr7_N7fMBIX
+'''
 class SQUAD():
+    class DataType(Enum):
+        TRAIN = 1
+        TEST = 2
+
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
-        self.data = load_dataset("squad", split="train")
-        self.data = self.data.train_test_split(test_size=0.2)
-        self.train_data = self.data["train"]
+
+        self.train_squad = open_file("/dataset/train-v1.1.json")
+        # self.train_data = dataset_parse(self.train_squad).train_test_split(test_size=0.2)
+        self.train_data = dataset_parse(self.train_squad)
+
+        self.dev_squad = open_file("/dataset/dev-v1.1.json")
+        self.dev_data = dataset_parse(self.dev_squad)
+
+        self.data = DatasetDict({"train": self.train_data, "validation": self.dev_data})
 
     def prepare_train_features(self, examples):
-
         # Some of the questions have lots of whitespace on the left, which is not useful and will make the
         # truncation of the context fail (the tokenized question will take a lots of space). So we remove that
         # left whitespace
@@ -130,33 +150,64 @@ class SQUAD():
             ]
 
         return tokenized_examples
-    
-    def dataset_parse(self, dataset):
-        pre_dataframe = []
-        for data in dataset:
-            for p in data["paragraphs"]:
-                for pqas in p["qas"]:
-                    for ans in pqas["answers"]:
-                        # pre_dataframe.append(map(str, [p["context"], pqas["question"].strip(), ans["answer_start"], ans["text"]]))
-                        pre_dataframe.append([p["context"], pqas["question"].strip(), { "answer_start": [int(ans["answer_start"])], "text": ans["text"] }])
-
-        df = pd.DataFrame(pre_dataframe, columns=["context", "question", "answers"])
-        ds = Dataset.from_pandas(df)
-
-        return ds
 
     def get_train_set(self):
-        # ds = self.dataset_parse(self.train_data)
-        data = self.data
-        tokenized_ds = data.map(self.prepare_train_features, batched=True, remove_columns=data["train"].column_names)
-        
-        return tokenized_ds
+        ds = self.data
+        tokenized = ds.map(self.prepare_train_features, batched=True, remove_columns=ds["train"].column_names)
+
+        return tokenized
     
     def get_test_set(self):
-        data = self.data
-        validation_features = data["test"].map(
+        ds = self.data
+        validation_features = ds.map(
             self.prepare_validation_features,
             batched=True,
-            remove_columns=data["test"].column_names
+            remove_columns=ds["validation"].column_names
         )
-        print(validation_features)
+
+        return validation_features
+    
+    def get_data(self):
+        return self.data
+
+def open_file(file_path):
+    try:
+        f = open(f'{CWD}{file_path}')
+        dataset = json.load(f, strict=False)["data"]
+        return dataset
+    except:
+        print("Invalid file path.")
+
+def dataset_parse(dataset):
+    ids = []
+    titles = []
+    contexts = []
+    questions = []
+    answers = []
+
+    for data in dataset:
+        for p in data["paragraphs"]:
+            for pqas in p["qas"]:
+                titles.append(data["title"])
+                contexts.append(p["context"])
+                ids.append(pqas["id"])
+                questions.append(pqas["question"])
+
+                text = []
+                answer_start = []
+                for ans in pqas["answers"]:
+                    text.append(ans["text"])
+                    answer_start.append(ans["answer_start"])
+                
+                ans = dict({'text': text, 'answer_start': answer_start})
+                answers.append(ans)
+
+    parsed_data = dict({'id': ids, 'title': titles, 'context': contexts, 'question': questions, 'answers': answers})
+
+    return Dataset.from_dict(parsed_data)
+
+if __name__ == '__main__':
+    model_checkpoint = "distilbert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    squad = SQUAD(tokenizer)
+    print(squad.get_train_set())
