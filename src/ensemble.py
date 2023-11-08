@@ -17,10 +17,12 @@ class AnswerPrediction(NamedTuple):
 
 class EnsembleUnit:
     """Component representing one submodel of the ensemble model"""
-    def __init__(self, model: Module, tokenizer: PreTrainedTokenizerBase, weight: float):
+    def __init__(self, model: Module, tokenizer: PreTrainedTokenizerBase, weight: float, device: str):
+        model.to(device)
         self.model = model
         self.tokenizer = tokenizer
         self.weight = weight
+        self.device = device
 
     def predict(self, question: str, context: str) -> AnswerPrediction:
         """
@@ -32,6 +34,7 @@ class EnsembleUnit:
         last_encoded_subword_token = self.tokenizer.encode(unified_tokens[-1], add_special_tokens=False)[-1]
         d = len(unified_tokens)
         inputs = self.tokenizer(question, context, return_tensors="pt")
+        inputs.to(self.device)
         inputs_idx = [0] * (d+1)
         inputs_idx[d] = (inputs.input_ids[0] == last_encoded_subword_token).nonzero().max().item() + 1
         for i in range(d-1, -1, -1):
@@ -46,10 +49,10 @@ class EnsembleUnit:
             start_idx, end_idx = inputs_idx[i], inputs_idx[i+1]
             start_logits_list[i] = outputs.start_logits[0, start_idx:end_idx].max().item()
             end_logits_list[i] = outputs.end_logits[0, start_idx:end_idx].max().item()
-        start_logits = torch.tensor([start_logits_list], dtype=torch.float32)
+        start_logits = torch.tensor([start_logits_list], dtype=torch.float32, device=self.device)
         start_softmax = torch.softmax(start_logits, dim=1)
         start_argmax = start_logits.argmax().item()
-        end_logits = torch.tensor([end_logits_list], dtype=torch.float32)
+        end_logits = torch.tensor([end_logits_list], dtype=torch.float32, device=self.device)
         end_softmax = torch.softmax(end_logits, dim=1)
         end_argmax = end_logits.argmax().item()
         prediction = AnswerPrediction(
@@ -60,12 +63,13 @@ class EnsembleUnit:
 
 class EnsembleModel:
     """Ensemble model for question answering models built from hugging face transformers"""
-    def __init__(self):
+    def __init__(self, device: str = "cpu"):
         self.units: list[EnsembleUnit] = []
         self.total_weight = 0.0
+        self.device = device
 
     def add_model(self, model: Module, tokenizer: PreTrainedTokenizerBase, weight: float = 1.0):
-        unit = EnsembleUnit(model, tokenizer, weight)
+        unit = EnsembleUnit(model, tokenizer, weight, self.device)
         self.units.append(unit)
         self.total_weight += weight
 
@@ -77,8 +81,8 @@ class EnsembleModel:
         unified_tokens = context.split()
         d = len(unified_tokens)
         predictions = [unit.predict(question, context) for unit in self.units]
-        start_vals = torch.tensor([[0.0] * d], dtype=torch.float32)
-        end_vals = torch.tensor([[0.0] * d], dtype=torch.float32)
+        start_vals = torch.tensor([[0.0] * d], dtype=torch.float32, device=self.device)
+        end_vals = torch.tensor([[0.0] * d], dtype=torch.float32, device=self.device)
         for pred in predictions:
             if mode == "soft":
                 start_vals = start_vals + (pred.weight / self.total_weight) * pred.start_softmax
