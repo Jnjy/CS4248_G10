@@ -7,8 +7,8 @@ from preprocess import SQUAD
 CWD = os.getcwd()
 
 def train():
-    model_checkpoint = "distilbert-base-uncased"
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    model_checkpoint = "albert-base-v2"
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, use_fast=False)
     
     squad = SQUAD(tokenizer)
     tokenized_dataset = squad.get_train_set()
@@ -26,7 +26,7 @@ def train():
         learning_rate=2e-5,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        num_train_epochs=3,
+        num_train_epochs=5,
         weight_decay=0.01
     )
 

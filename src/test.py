@@ -11,11 +11,12 @@ from datasets import load_metric, load_dataset
 from evaluate import evaluator
 
 CWD = os.getcwd()
+my_model_checkpoint = "jeffnjy/albert-base-test"
 
 def test():
     
-    my_model_checkpoint = "jeffnjy/distilbert-test-2"
-    model_checkpoint = "distilbert-base-uncased"
+    # my_model_checkpoint = "jeffnjy/albert-base"
+    # model_checkpoint = "distilbert-base-uncased"
 
     tokenizer = AutoTokenizer.from_pretrained(my_model_checkpoint)
     model = AutoModelForQuestionAnswering.from_pretrained(my_model_checkpoint)
@@ -134,7 +135,7 @@ def postprocess_qa_predictions(examples, features, raw_predictions, n_best_size 
             offset_mapping = features[feature_index]["offset_mapping"]
 
             # Update minimum null prediction.
-            tokenizer = AutoTokenizer.from_pretrained("jeffnjy/distilbert-base-test")
+            tokenizer = AutoTokenizer.from_pretrained(my_model_checkpoint)
             cls_index = features[feature_index]["input_ids"].index(tokenizer.cls_token_id)
             feature_null_score = start_logits[cls_index] + end_logits[cls_index]
             if min_null_score is None or min_null_score < feature_null_score:
