@@ -4,6 +4,7 @@ from typing import Literal, NamedTuple
 import torch
 from torch.nn import Module
 from transformers import PreTrainedTokenizerFast
+from tqdm import tqdm
 
 
 class AnswerPrediction(NamedTuple):
@@ -146,15 +147,21 @@ class EnsembleModel:
         mode = soft: combine the weighted softmax probabilities of each model
         mode = hard: combine the weighted final answer vote of each model
         """
-        result = {}
+        contexts, queries = [], []
         with open(inpath, mode="r") as infile:
             dataset = json.load(infile, strict=False)["data"]
             for data in dataset:
                 for paragraph in data["paragraphs"]:
-                    context = paragraph["context"]
+                    contexts.append(paragraph["context"])
+                    context_id = len(contexts) - 1
                     for qa in paragraph["qas"]:
                         id = qa["id"]
                         question = qa["question"]
-                        result[id] = self.predict(question, context, mode)
+                        queries.append((id, question, context_id))
+        result = {}
+        for query in tqdm(queries):
+            id, question, context_id = query
+            context = contexts[context_id]
+            result[id] = self.predict(question, context, mode)
         with open(outpath, mode="w") as outfile:
             json.dump(result, outfile)
