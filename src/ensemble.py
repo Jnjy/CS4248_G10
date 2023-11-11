@@ -1,11 +1,15 @@
 import json
+import os
+import logging
 from typing import Literal, NamedTuple
 
 import torch
 from torch.nn import Module
-from transformers import PreTrainedTokenizerFast
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, RobertaTokenizerFast, PreTrainedTokenizerFast
 from tqdm import tqdm
 
+CWD = os.getcwd()
+logger = logging.getLogger()
 
 class AnswerPrediction(NamedTuple):
     start_logits: torch.Tensor
@@ -165,3 +169,56 @@ class EnsembleModel:
             result[id] = self.predict(question, context, mode)
         with open(outpath, mode="w") as outfile:
             json.dump(result, outfile)
+
+def run_ensemble():
+    ''' 1. load models '''
+    # distilbert
+    logger.info("Load Model: Distilbert")
+    distilbert_name = "jeffnjy/distilbert-base-test"
+    distilbert_tokenizer = AutoTokenizer.from_pretrained(distilbert_name)
+    distilbert_model = AutoModelForQuestionAnswering.from_pretrained(distilbert_name)
+    
+    # albert
+    logger.info("Load Model: Albert")
+    albert_name = "jeffnjy/albert-base-test"
+    albert_tokenizer = AutoTokenizer.from_pretrained(albert_name)
+    albert_model = AutoModelForQuestionAnswering.from_pretrained(albert_name)
+    
+    # bert
+    logger.info("Load Model: Bert")
+    bert_name = "jeffnjy/bert-base-test"
+    bert_tokenizer = AutoTokenizer.from_pretrained(bert_name)
+    bert_model = AutoModelForQuestionAnswering.from_pretrained(bert_name)
+    
+    # roberta
+    logger.info("Load Model: Roberta")
+    roberta_name = "jeffnjy/roberta-base-test"
+    roberta_tokenizer = RobertaTokenizerFast.from_pretrained(roberta_name)
+    roberta_model = AutoModelForQuestionAnswering.from_pretrained(roberta_name)
+
+    
+    ''' 2. create ensemble model '''
+    logger.info("Create Ensemble Model")
+    model_weights = {
+        "bert": 100.0,
+        "albert": 40.0,
+        "distilbert": 10.0,
+        "roberta": 70.0,
+    }
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    
+    ensemble_model = EnsembleModel(device=device)
+    ensemble_model.add_model(model=distilbert_model, tokenizer=distilbert_tokenizer, weight=model_weights["distilbert"])
+    ensemble_model.add_model(model=albert_model, tokenizer=albert_tokenizer, weight=model_weights["albert"])
+    ensemble_model.add_model(model=roberta_model, tokenizer=roberta_tokenizer, weight=model_weights["roberta"])
+    ensemble_model.add_model(model=bert_model, tokenizer=bert_tokenizer, weight=model_weights["bert"])
+    
+    ''' 3. make predictions '''
+    logger.info("Making predictions")
+    inpath = f'{CWD}/dataset/dev-v1.1.json'
+    outpath = f'{CWD}/result/prediction/ensemble_all_high_ranking.json'
+    ensemble_model.generate_prediction_json(inpath, outpath, mode="soft")
+    
+if __name__ == '__main__':
+    run_ensemble()
+    
