@@ -1,3 +1,4 @@
+import json
 from typing import Literal, NamedTuple
 
 import torch
@@ -139,3 +140,21 @@ class EnsembleModel:
         answer_end_idx = end_vals.argmax().item() + 1
         answer = " ".join(unified_tokens[answer_start_idx:answer_end_idx])
         return answer
+
+    def generate_prediction_json(self, inpath: str, outpath: str, mode: Literal["soft", "hard"] = "soft"):
+        """
+        mode = soft: combine the weighted softmax probabilities of each model
+        mode = hard: combine the weighted final answer vote of each model
+        """
+        result = {}
+        with open(inpath, mode="r") as infile:
+            dataset = json.load(infile, strict=False)["data"]
+            for data in dataset:
+                for paragraph in data["paragraphs"]:
+                    context = paragraph["context"]
+                    for qa in paragraph["qas"]:
+                        id = qa["id"]
+                        question = qa["question"]
+                        result[id] = self.predict(question, context, mode)
+        with open(outpath, mode="w") as outfile:
+            json.dump(result, outfile)
