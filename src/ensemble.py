@@ -142,6 +142,7 @@ class EnsembleModel:
                 end_vals[0, pred.end_argmax] += pred.weight
         # Convert to answer string
         answer_start_idx = start_vals.argmax().item()
+        end_vals[0, 0:answer_start_idx] = 0.0
         answer_end_idx = end_vals.argmax().item() + 1
         answer = " ".join(unified_tokens[answer_start_idx:answer_end_idx])
         return answer
