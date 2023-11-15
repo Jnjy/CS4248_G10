@@ -60,8 +60,8 @@ class EnsembleUnit:
                 continue
             question_start = True
             context_start = question_end
-            if not context_start:
-                # skip the question part
+            if (not context_start) or context_end:
+                # only map the context part
                 continue
             if word_idx < 0:
                 # initialize start of first word
