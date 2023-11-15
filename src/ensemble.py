@@ -48,14 +48,19 @@ class EnsembleUnit:
         inputs.to(self.device)
         inputs_idx = [0] * (num_word_tokens+1)
         num_subword_tokens = len(inputs.word_ids())
-        special_count = 0
+        question_start, question_end = False, False
+        context_start, context_end = False, False
         word_idx = -1
         for i in range(num_subword_tokens):
             char_span = inputs.token_to_chars(i)
             if char_span is None:
-                special_count += 1
+                # before/after the question/context part
+                question_end = question_start
+                context_end = context_start
                 continue
-            if special_count < 2:
+            question_start = True
+            context_start = question_end
+            if not context_start:
                 # skip the question part
                 continue
             if word_idx < 0:
