@@ -19,11 +19,17 @@ conda activate cs4248
 conda info --env
 
 echo "===training==="
-python3 /home/n/njinyuan/CS4248/CS4248_G10/src/test.py
+## Uncomment this to run training
+python3 ./src/train.py
 
-python3 /home/n/njinyuan/CS4248/CS4248_G10/src/evaluate-g10.py
-# python3 /home/n/njinyuan/CS4248/CS4248_G10/src/evaluate-v2.0.py
-# /home/n/njinyuan/CS4248/CS4248_G10/result/predictions.json 
+## Uncomment this to run testing
+# python3 ./src/test.py
+
+## Uncomment this to run evaluation
+# python3 ./src/evaluate-v2.0.py ./dataset/dev-v1.1.json ./result/prediction/ensemble_all_high_ranking.json
+
+## Uncomment this to run ensemble
+# python3 /home/n/njinyuan/CS4248/CS4248_G10/src/ensemble.py
 
 echo "finished training, deactivating env"
 conda deactivate
