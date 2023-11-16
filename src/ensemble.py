@@ -1,6 +1,8 @@
 import json
 import os
 import logging
+import subprocess
+
 from typing import Literal, NamedTuple
 
 import torch
@@ -10,7 +12,6 @@ from tqdm import tqdm
 
 CWD = os.getcwd()
 logger = logging.getLogger()
-
 
 class AnswerPrediction(NamedTuple):
     start_logits: torch.Tensor
@@ -49,20 +50,15 @@ class EnsembleUnit:
         inputs.to(self.device)
         inputs_idx = [0] * (num_word_tokens+1)
         num_subword_tokens = len(inputs.word_ids())
-        question_start, question_end = False, False
-        context_start, context_end = False, False
+        special_count = 0
         word_idx = -1
         for i in range(num_subword_tokens):
             char_span = inputs.token_to_chars(i)
             if char_span is None:
-                # before/after the question/context part
-                question_end = question_start
-                context_end = context_start
+                special_count += 1
                 continue
-            question_start = True
-            context_start = question_end
-            if (not context_start) or context_end:
-                # only map the context part
+            if special_count < 2:
+                # skip the question part
                 continue
             if word_idx < 0:
                 # initialize start of first word
@@ -148,7 +144,6 @@ class EnsembleModel:
                 end_vals[0, pred.end_argmax] += pred.weight
         # Convert to answer string
         answer_start_idx = start_vals.argmax().item()
-        end_vals[0, 0:answer_start_idx] = 0.0
         answer_end_idx = end_vals.argmax().item() + 1
         answer = " ".join(unified_tokens[answer_start_idx:answer_end_idx])
         return answer
@@ -177,64 +172,137 @@ class EnsembleModel:
         with open(outpath, mode="w") as outfile:
             json.dump(result, outfile)
 
-
-def run_ensemble():
+def run_soft_ensemble():
     ''' 1. load models '''
     # distilbert
     logger.info("Load Model: Distilbert")
     distilbert_name = "jeffnjy/distilbert-base-test"
     distilbert_tokenizer = AutoTokenizer.from_pretrained(distilbert_name)
     distilbert_model = AutoModelForQuestionAnswering.from_pretrained(distilbert_name)
-
+    
     # albert
     logger.info("Load Model: Albert")
     albert_name = "jeffnjy/albert-base-test"
     albert_tokenizer = AutoTokenizer.from_pretrained(albert_name)
     albert_model = AutoModelForQuestionAnswering.from_pretrained(albert_name)
-
+    
     # bert
     logger.info("Load Model: Bert")
     bert_name = "jeffnjy/bert-base-test"
     bert_tokenizer = AutoTokenizer.from_pretrained(bert_name)
     bert_model = AutoModelForQuestionAnswering.from_pretrained(bert_name)
-
+    
     # roberta
     logger.info("Load Model: Roberta")
     roberta_name = "jeffnjy/roberta-base-test"
     roberta_tokenizer = RobertaTokenizerFast.from_pretrained(roberta_name)
     roberta_model = AutoModelForQuestionAnswering.from_pretrained(roberta_name)
 
-    # xlnet
-    logger.info("Load Model: XLNet")
-    xlnet_name = "JiayanL/XLNET"
-    xlnet_tokenizer = AutoTokenizer.from_pretrained(xlnet_name)
-    xlnet_model = AutoModelForQuestionAnswering.from_pretrained(xlnet_name)
-
+    
     ''' 2. create ensemble model '''
-    logger.info("Create Ensemble Model")
-    model_weights = {
-        "bert": 100.0,
-        "albert": 40.0,
-        "distilbert": 10.0,
-        "roberta": 70.0,
-        "xlnet": 50.0,
-    }
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    ensemble_model = EnsembleModel(device=device)
-    ensemble_model.add_model(model=distilbert_model, tokenizer=distilbert_tokenizer, weight=model_weights["distilbert"])
-    ensemble_model.add_model(model=albert_model, tokenizer=albert_tokenizer, weight=model_weights["albert"])
-    ensemble_model.add_model(model=roberta_model, tokenizer=roberta_tokenizer, weight=model_weights["roberta"])
-    ensemble_model.add_model(model=bert_model, tokenizer=bert_tokenizer, weight=model_weights["bert"])
-    ensemble_model.add_model(model=xlnet_model, tokenizer=xlnet_tokenizer, weight=model_weights["xlnet"])
 
-    ''' 3. make predictions '''
-    logger.info("Making predictions")
-    inpath = f'{CWD}/dataset/dev-v1.1.json'
-    outpath = f'{CWD}/result/prediction/ensemble_all_high_ranking.json'
-    ensemble_model.generate_prediction_json(inpath, outpath, mode="soft")
+    soft_weights = [(1, 1, 1, 1), (0.5, 0.5, 0.5, 1), (0.1, 0.1, 0.1, 1), (0.1, 0.2, 0.1, 1), (0.2, 0.1, 0.1, 1), (0.1, 0.5, 0.1, 1),
+                    (0.2, 0.2, 0.1, 1), (0.2, 0.3, 0.1, 1), (0.2, 0.4, 0.1, 1), (0.2, 0.5, 0.1, 1), (0.2, 1, 0.1, 1), 
+                    (0.5, 0.1, 0.1, 1), (0.5, 0.2, 0.1, 1), (0.5, 0.5, 0.1, 1), (0.5, 1, 0.1, 1), (20.1425, 21.4624, 18.985, 20.7625),
+                    (0, 0.4, 0, 1), (0.2, 0.4, 0, 1), (0.2, 0.4, 0.2, 1), (0.2, 0.4, 0.3, 1),
+                    (0.2, 0.4, 0.4, 1), (0.3, 0.4, 0.1, 1), (0.3, 0.4, 0.2, 1), (0.3, 0.4, 0.3, 1), (0.3, 0.4, 0.4, 1), 
+                    (0.4, 0.4, 0.1, 1), (0.4, 0.4, 0.2, 1), (0.4, 0.4, 0.3, 1), (0.4, 0.4, 0.4, 1)]
 
+    for soft_weight in soft_weights:
+        bert_sw = soft_weight[0]
+        albert_sw = soft_weight[1]
+        distilbert_sw = soft_weight[2]
+        roberta_sw = soft_weight[3]
+
+        model_weights = {
+            "bert": bert_sw,
+            "albert": albert_sw,
+            "distilbert": distilbert_sw,
+            "roberta": roberta_sw,
+        }
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    
+        ensemble_model = EnsembleModel(device=device)
+        ensemble_model.add_model(model=distilbert_model, tokenizer=distilbert_tokenizer, weight=model_weights["distilbert"])
+        ensemble_model.add_model(model=albert_model, tokenizer=albert_tokenizer, weight=model_weights["albert"])
+        ensemble_model.add_model(model=roberta_model, tokenizer=roberta_tokenizer, weight=model_weights["roberta"])
+        ensemble_model.add_model(model=bert_model, tokenizer=bert_tokenizer, weight=model_weights["bert"])
+        
+        ''' 3. make predictions '''
+        logger.info("Making predictions")
+        inpath = f'{CWD}/dataset/dev-v1.1.json'
+        outpath = f'{CWD}/result/prediction/ensemble-soft/ensemble_soft_{bert_sw}-{albert_sw}-{distilbert_sw}-{roberta_sw}.json'
+        ensemble_model.generate_prediction_json(inpath, outpath, mode="soft")
+    
+
+def run_hard_ensemble():
+    ''' 1. load models '''
+    # distilbert
+    logger.info("Load Model: Distilbert")
+    distilbert_name = "jeffnjy/distilbert-base-test"
+    distilbert_tokenizer = AutoTokenizer.from_pretrained(distilbert_name)
+    distilbert_model = AutoModelForQuestionAnswering.from_pretrained(distilbert_name)
+    
+    # albert
+    logger.info("Load Model: Albert")
+    albert_name = "jeffnjy/albert-base-test"
+    albert_tokenizer = AutoTokenizer.from_pretrained(albert_name)
+    albert_model = AutoModelForQuestionAnswering.from_pretrained(albert_name)
+    
+    # bert
+    logger.info("Load Model: Bert")
+    bert_name = "jeffnjy/bert-base-test"
+    bert_tokenizer = AutoTokenizer.from_pretrained(bert_name)
+    bert_model = AutoModelForQuestionAnswering.from_pretrained(bert_name)
+    
+    # roberta
+    logger.info("Load Model: Roberta")
+    roberta_name = "jeffnjy/roberta-base-test"
+    roberta_tokenizer = RobertaTokenizerFast.from_pretrained(roberta_name)
+    roberta_model = AutoModelForQuestionAnswering.from_pretrained(roberta_name)
+
+    
+    ''' 2. create ensemble model '''
+    hard_weights = [(1, 1, 1, 1), (0.5, 0.5, 0.5, 1), (0.1, 0.1, 0.1, 1), (0.1, 0.2, 0.1, 1), (0.2, 0.1, 0.1, 1), (0.1, 0.5, 0.1, 1),
+                    (0.2, 0.2, 0.1, 1), (0.2, 0.3, 0.1, 1), (0.2, 0.4, 0.1, 1), (0.2, 0.5, 0.1, 1), (0.2, 1, 0.1, 1), 
+                    (0.5, 0.1, 0.1, 1), (0.5, 0.2, 0.1, 1), (0.5, 0.5, 0.1, 1), (0.5, 1, 0.1, 1), (20.1425, 21.4624, 18.985, 20.7625),
+                    (0, 0.4, 0, 1), (0.2, 0.4, 0, 1), (0.2, 0.4, 0.2, 1), (0.2, 0.4, 0.3, 1),
+                    (0.2, 0.4, 0.4, 1), (0.3, 0.4, 0.1, 1), (0.3, 0.4, 0.2, 1), (0.3, 0.4, 0.3, 1), (0.3, 0.4, 0.4, 1), 
+                    (0.4, 0.4, 0.1, 1), (0.4, 0.4, 0.2, 1), (0.4, 0.4, 0.3, 1), (0.4, 0.4, 0.4, 1)]
+    
+    for hard_weight in hard_weights:
+        bert_hw = hard_weight[0]
+        albert_hw = hard_weight[1]
+        distilbert_hw = hard_weight[2]
+        roberta_hw = hard_weight[3]
+        
+        model_weights = {
+            "bert": bert_hw,
+            "albert": albert_hw,
+            "distilbert": distilbert_hw,
+            "roberta": roberta_hw,
+        }
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+        print("running ensemble-hard for ", model_weights)
+        
+        ensemble_model = EnsembleModel(device=device)
+        ensemble_model.add_model(model=distilbert_model, tokenizer=distilbert_tokenizer, weight=model_weights["distilbert"])
+        ensemble_model.add_model(model=albert_model, tokenizer=albert_tokenizer, weight=model_weights["albert"])
+        ensemble_model.add_model(model=roberta_model, tokenizer=roberta_tokenizer, weight=model_weights["roberta"])
+        ensemble_model.add_model(model=bert_model, tokenizer=bert_tokenizer, weight=model_weights["bert"])
+        
+        ''' 3. make predictions '''
+        logger.info("Making predictions")
+        inpath = f'{CWD}/dataset/dev-v1.1.json'
+        outpath = f'{CWD}/result/prediction/ensemble-hard/ensemble_hard_{bert_hw}-{albert_hw}-{distilbert_hw}-{roberta_hw}.json'
+        ensemble_model.generate_prediction_json(inpath, outpath, mode="hard")
+
+        list_files = subprocess.run(["python3",
+            f'{CWD}/src/evaluate-v2.0.py',
+            f'{CWD}/dataset/dev-v1.1.json', outpath], text=True)
 
 if __name__ == '__main__':
-    run_ensemble()
+    run_hard_ensemble()
     
