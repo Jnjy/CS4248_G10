@@ -1,18 +1,17 @@
 import os
 
-from distilbert import *
-from transformers import AutoTokenizer, DefaultDataCollator, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, DefaultDataCollator, Trainer, TrainingArguments
 from preprocess import SQUAD
 
 CWD = os.getcwd()
 
 def train():
-    model_checkpoint = "albert-base-v2"
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, use_fast=False)
+    model_checkpoint = "distilbert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     
     squad = SQUAD(tokenizer)
     tokenized_dataset = squad.get_train_set()
- 
+
     model = AutoModelForQuestionAnswering.from_pretrained(model_checkpoint)
     data_collator = DefaultDataCollator()
 
