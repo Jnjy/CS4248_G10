@@ -28,12 +28,12 @@ To run the project locally, follow these steps:
 
 1. Clone the repository to your local machine:
    ```bash
-   git clone https://github.com/your-username/cs4248-group-project.git
+   git clone https://github.com/ScorpiusSigma/CS4248_G10.git
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd cs4248-group-project
+   cd CS4248_G10
    ```
 
 3. Set up a virtual environment (optional but recommended):
