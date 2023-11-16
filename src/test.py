@@ -11,7 +11,7 @@ from datasets import load_metric, load_dataset
 from evaluate import evaluator
 
 CWD = os.getcwd()
-my_model_checkpoint = "jeffnjy/albert-base-test"
+my_model_checkpoint = "jeffnjy/distilbert-base-test"
 
 def test():
     
