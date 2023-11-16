@@ -16,7 +16,7 @@ The project is built using the following technologies and frameworks:
 - [XLNet](https://huggingface.co/xlnet-base-cased)
 - [Jupyter Notebook](https://jupyter.org/)
 
-## Team Members
+## Team Members of Group 10
 - A0170723L
 - A0241293J
 - A0240932L
