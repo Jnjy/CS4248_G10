@@ -86,5 +86,6 @@ soft_weights = [(1, 1, 1, 1)]
 soft_weights = [(1, 1, 1, 1)]
 ```
 
+Data on our experiments can be found here: https://docs.google.com/document/d/1DR2qqxTZ056ni9E6luCJ8e4A7bjkjCG0uhZH-JnLzRc/edit?usp=sharing 
 
 Happy coding!
