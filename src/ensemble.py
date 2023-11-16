@@ -200,8 +200,6 @@ def run_soft_ensemble():
 
     
     ''' 2. create ensemble model '''
-
-
     soft_weights = [(1, 1, 1, 1), (0.5, 0.5, 0.5, 1), (0.1, 0.1, 0.1, 1), (0.1, 0.2, 0.1, 1), (0.2, 0.1, 0.1, 1), (0.1, 0.5, 0.1, 1),
                     (0.2, 0.2, 0.1, 1), (0.2, 0.3, 0.1, 1), (0.2, 0.4, 0.1, 1), (0.2, 0.5, 0.1, 1), (0.2, 1, 0.1, 1), 
                     (0.5, 0.1, 0.1, 1), (0.5, 0.2, 0.1, 1), (0.5, 0.5, 0.1, 1), (0.5, 1, 0.1, 1), (20.1425, 21.4624, 18.985, 20.7625),
@@ -223,6 +221,8 @@ def run_soft_ensemble():
         }
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
     
+        print("running ensemble-soft for ", model_weights)
+        
         ensemble_model = EnsembleModel(device=device)
         ensemble_model.add_model(model=distilbert_model, tokenizer=distilbert_tokenizer, weight=model_weights["distilbert"])
         ensemble_model.add_model(model=albert_model, tokenizer=albert_tokenizer, weight=model_weights["albert"])
@@ -234,7 +234,10 @@ def run_soft_ensemble():
         inpath = f'{CWD}/dataset/dev-v1.1.json'
         outpath = f'{CWD}/result/prediction/ensemble-soft/ensemble_soft_{bert_sw}-{albert_sw}-{distilbert_sw}-{roberta_sw}.json'
         ensemble_model.generate_prediction_json(inpath, outpath, mode="soft")
-    
+
+        list_files = subprocess.run(["python3",
+            f'{CWD}/src/evaluate-v2.0.py',
+            f'{CWD}/dataset/dev-v1.1.json', outpath], text=True)
 
 def run_hard_ensemble():
     ''' 1. load models '''
@@ -264,12 +267,14 @@ def run_hard_ensemble():
 
     
     ''' 2. create ensemble model '''
-    hard_weights = [(1, 1, 1, 1), (0.5, 0.5, 0.5, 1), (0.1, 0.1, 0.1, 1), (0.1, 0.2, 0.1, 1), (0.2, 0.1, 0.1, 1), (0.1, 0.5, 0.1, 1),
-                    (0.2, 0.2, 0.1, 1), (0.2, 0.3, 0.1, 1), (0.2, 0.4, 0.1, 1), (0.2, 0.5, 0.1, 1), (0.2, 1, 0.1, 1), 
-                    (0.5, 0.1, 0.1, 1), (0.5, 0.2, 0.1, 1), (0.5, 0.5, 0.1, 1), (0.5, 1, 0.1, 1), (20.1425, 21.4624, 18.985, 20.7625),
+    hard_weights = [(1, 1, 1, 1), (0.5, 0.5, 0.5, 1), (0.1, 0.1, 0.1, 1), (0.1, 0.2, 0.1, 1), 
+                    (0.2, 0.1, 0.1, 1), (0.1, 0.5, 0.1, 1), (0.2, 0.2, 0.1, 1), (0.2, 0.3, 0.1, 1), 
+                    (0.2, 0.4, 0.1, 1), (0.2, 0.5, 0.1, 1), (0.2, 1, 0.1, 1), (0.5, 0.1, 0.1, 1), 
+                    (0.5, 0.2, 0.1, 1), (0.5, 0.5, 0.1, 1), (0.5, 1, 0.1, 1), (20.1425, 21.4624, 18.985, 20.7625),
                     (0, 0.4, 0, 1), (0.2, 0.4, 0, 1), (0.2, 0.4, 0.2, 1), (0.2, 0.4, 0.3, 1),
-                    (0.2, 0.4, 0.4, 1), (0.3, 0.4, 0.1, 1), (0.3, 0.4, 0.2, 1), (0.3, 0.4, 0.3, 1), (0.3, 0.4, 0.4, 1), 
-                    (0.4, 0.4, 0.1, 1), (0.4, 0.4, 0.2, 1), (0.4, 0.4, 0.3, 1), (0.4, 0.4, 0.4, 1)]
+                    (0.2, 0.4, 0.4, 1), (0.3, 0.4, 0.1, 1), (0.3, 0.4, 0.2, 1), (0.3, 0.4, 0.3, 1), 
+                    (0.3, 0.4, 0.4, 1), (0.4, 0.4, 0.1, 1), (0.4, 0.4, 0.2, 1), (0.4, 0.4, 0.3, 1), 
+                    (0.4, 0.4, 0.4, 1)]
     
     for hard_weight in hard_weights:
         bert_hw = hard_weight[0]
@@ -304,5 +309,6 @@ def run_hard_ensemble():
             f'{CWD}/dataset/dev-v1.1.json', outpath], text=True)
 
 if __name__ == '__main__':
-    run_hard_ensemble()
+    run_soft_ensemble()
+    # run_hard_ensemble()
     
