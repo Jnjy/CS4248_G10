@@ -1,9 +1,7 @@
 # CS4248 Group Project: Machine Reading Comprehension (MRC)
 
 ## Introduction
-Machine Reading Comprehension (MRC) stands at the forefront of Natural Language Processing (NLP), playing a pivotal role in Question Answering (QA) tasks. QA involves the comprehension of a given corpus, followed by the selection of text spans within the corpus that answer a set of posed questions. In our CS4248 group project, we delved into the realm of pre-trained transformer-based models to scrutinize their strengths and weaknesses. Specifically, we focused on BERT, DistilBERT, RoBERTa, ALBERT, and XLNet.
-
-To elevate QA performance, we engaged in a meticulous process of hyperparameter fine-tuning for each model. This optimization aimed to identify the most effective configuration for achieving the best-performing base model. Additionally, recognizing the potential benefits of an ensemble approach, we explored combining the strengths of our fine-tuned transformer-based models. Our experiments revealed that our ensemble model surpassed the majority of individual models, although it fell short of outperforming the top-performing model, RoBERTa, in terms of overall performance.
+Machine Reading Comprehension (MRC) is a critical facet of Natural Language Processing (NLP), particularly in the domain of Question Answering (QA) tasks. Question Answering involves comprehending the given corpus, then selecting the span of text in the corpus that answers to a given set of questions. In this project, we explored the different pre-trained transformer-based models to identify the strengths and weaknesses of the different models, respectively BERT, DistilBERT, RoBERTa, AlBERT and XLNet. To further improve the performance on QA, we proceed to fine-tune the models' hyperparameters to obtain best performing based model. We then explore the imperative of enhancing MRC performance through an ensemble methodology, amalgamating the capabilities of the fine-tuned transformer-based models. Our experiments demonstrates that **our ensemble model outperforms** all of the selected baseline models.
 
 ## Built With
 The project is built using the following technologies and frameworks:
@@ -29,6 +27,7 @@ The project is built using the following technologies and frameworks:
 - jeffnjy/albert-base-test
 - jeffnjy/distilbert-base-test
 - jeffnjy/roberta-base-test
+- JiayanL/XLNET
 
 ## Getting Started
 To run the project locally, follow these steps:
