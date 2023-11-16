@@ -232,7 +232,7 @@ def run_soft_ensemble():
         ''' 3. make predictions '''
         logger.info("Making predictions")
         inpath = f'{CWD}/dataset/dev-v1.1.json'
-        outpath = f'{CWD}/result/prediction/ensemble-soft/ensemble_soft_{bert_sw}-{albert_sw}-{distilbert_sw}-{roberta_sw}.json'
+        outpath = f'{CWD}/result/ensemble_soft_{bert_sw}-{albert_sw}-{distilbert_sw}-{roberta_sw}.json'
         ensemble_model.generate_prediction_json(inpath, outpath, mode="soft")
 
         list_files = subprocess.run(["python3",
@@ -301,7 +301,7 @@ def run_hard_ensemble():
         ''' 3. make predictions '''
         logger.info("Making predictions")
         inpath = f'{CWD}/dataset/dev-v1.1.json'
-        outpath = f'{CWD}/result/prediction/ensemble-hard/ensemble_hard_{bert_hw}-{albert_hw}-{distilbert_hw}-{roberta_hw}.json'
+        outpath = f'{CWD}/result/ensemble_hard_{bert_hw}-{albert_hw}-{distilbert_hw}-{roberta_hw}.json'
         ensemble_model.generate_prediction_json(inpath, outpath, mode="hard")
 
         list_files = subprocess.run(["python3",
