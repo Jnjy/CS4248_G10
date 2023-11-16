@@ -23,6 +23,13 @@ The project is built using the following technologies and frameworks:
 - A0238397M
 - A0236491B
 
+
+## All finetuned models are uploaded onto HuggingFace
+- jeffnjy/bert-base-test
+- jeffnjy/albert-base-test
+- jeffnjy/distilbert-base-test
+- jeffnjy/roberta-base-test
+
 ## Getting Started
 To run the project locally, follow these steps:
 
@@ -36,22 +43,49 @@ To run the project locally, follow these steps:
    cd CS4248_G10
    ```
 
-3. Set up a virtual environment (optional but recommended):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-
-4. Install the required dependencies:
+3. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-5. Launch Jupyter Notebook:
-   ```bash
-   jupyter notebook
+4. To run the ensemble method:
+   
+   #1: Open `src/ensemble.py`
+
+   #2: Select the ensemble method: hardmax / softmax by uncommenting the method you wish to run and comment the other
+   ```
+   if __name__ == '__main__':
+      run_soft_ensemble()
+      # run_hard_ensemble()
    ```
 
-6. Open and run the project Jupyter Notebook files.
+   #3: Open `script/run_ensemble.sh` to change your conda configuration
+   ```
+   ## edit the file path to your conda file env filepath
+   source /home/n/njinyuan/miniconda3/etc/profile.d/conda.sh
 
-Now, you're ready to explore and experiment with our MRC project. Feel free to customize configurations and parameters based on your requirements. Happy coding!
+   ## edit the environment to your conda environment
+   echo "activating environment"
+   conda activate cs4248
+   ```
+
+   #4: In the root folder, run
+   ```bash
+   sbatch script/run_ensemble.sh
+   ```
+
+5. Open the slurmog to check for the evaluated results.
+
+Now, you're ready to explore and experiment with our MRC project. Feel free to customize configurations and parameters based on your requirements in `src/ensemble.py`.
+```python
+# line 203
+''' 2. create ensemble model '''
+soft_weights = [(1, 1, 1, 1)]
+
+# line 270
+''' 2. create ensemble model '''
+soft_weights = [(1, 1, 1, 1)]
+```
+
+
+Happy coding!
