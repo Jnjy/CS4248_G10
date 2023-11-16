@@ -35,7 +35,7 @@ To run the project locally, follow these steps:
 
 1. Clone the repository to your local machine:
    ```bash
-   git clone https://github.com/ScorpiusSigma/CS4248_G10.git
+   git clone git@github.com:Jnjy/CS4248_G10.git
    ```
 
 2. Navigate to the project directory:
